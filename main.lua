@@ -240,6 +240,7 @@ do
 	
 	local root = {}
 	local tbl = root
+	-- Generate a mixed-up but deterministic table.
 	local actions = {"i", "nt", "s", "i", "i", "i", "s", "i", "nt", "i", "i", "s", "nt", "s", "bt", "bt", "i", "bt", "bf", "bf"}
 
 	if inc_nan then
@@ -342,6 +343,7 @@ print("\n * End Med-Sized Table Test * \n")
 
 print("\n * Script complete * \n")
 
-if love then
+-- If running via LÖVE, quit now. (On Windows, if you don't see any output, try running lovec.exe through a console.)
+if love and love.event and love.event.quit then
 	love.event.quit()
 end
