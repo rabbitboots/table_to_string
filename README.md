@@ -36,7 +36,7 @@ Some exceptions apply:
 
 Format tables may be attached to tables and sub-tables to control some aspects of the serialization process.
 
-* `fmt.priority_keys`: Sequence of strings representing fields which should be written first, in this order. *Default: Empty table*
+* `fmt.priority_keys`: Sequence of strings representing fields which should be written first, in this order. *Default: `nil`*
 
 * `fmt.missing_pri_key`: How to handle a missing priority key.
   * `"error"`: Raise a Lua error.
@@ -60,7 +60,7 @@ Assigns the table `fmt` to `tbl` using the key `fmt_key` (ie `tbl[fmt_key] = fmt
 If `recursive` is true, then the same operation is applied to all sub-tables. (NOTE: in this case, the same table reference is assigned to every sub-table. Changing the format table will affect all tables that it is attached to.)
 
 
-`tableToString.scrubFormatTable(tbl, fmt_key, recursive)`
+`tableToString.scrubFormatTable(tbl, fmt_key, [recursive])`
 
 Removes the format table from `tbl` stored in `tbl[fmt_key]`. If `recursive` is true, then the same operation is applied to all sub-tables.
 
