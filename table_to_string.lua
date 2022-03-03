@@ -662,7 +662,7 @@ end
 -- @param fmt The format table. (Note: contents are copied to a new table.)
 -- @param fmt_key A field value which is used to identify the format table. Needs to be something that does not normally appear in the table structure. Can be anything but nil or NaN.
 -- @param recursive (Optional, boolean, default: false) When true, recursively apply this format table to all child tables as well.
--- @param _seen Private-use table used for detecting cycles. Leave nil when calling.
+-- @return Nothing.
 function tableToString.setFormatTable(tbl, fmt, fmt_key, recursive)
 
 	-- Defaults
@@ -683,6 +683,7 @@ end
 -- @param tbl The table to clean up.
 -- @fmt_key The field name used to identify the format table, as set with tableToString.setFormatTable(). Can be anything but nil or NaN.
 -- @param recursive (Optional, boolean, default: false) When true, recursively clean the format key from all sub-tables.
+-- @return Nothing.
 function tableToString.scrubFormatTable(tbl, fmt_key, recursive)
 
 	-- Defaults
