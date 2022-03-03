@@ -35,7 +35,7 @@ local rooms = {
 
 -- Format tables.
 local fmt_box = {
-	missing_pri_key = "warn", -- "warn" for message, "error" to stop the script, nil to be quiet.
+	missing_pri_key = "warn",
 	priority_keys = {"x", "y", "w", "h"}
 }
 local fmt_room = {
@@ -52,7 +52,7 @@ end
 
 local str = tableToString.convert(rooms)
 
--- Recursively remove format tables.
+-- Cleanup: recursively remove format tables.
 tableToString.scrubFormatTable(rooms, true)
 
 print(str)
