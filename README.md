@@ -65,7 +65,7 @@ If `recursive` is true, then the same operation is applied to all sub-tables. (N
 Removes the format table from `tbl` stored in `tbl[fmt_key]`. If `recursive` is true, then the same operation is applied to all sub-tables.
 
 
-## Issues and Other Limitations
+## Issues and Limitations
 
 tableToString can serialize tables that are too deeply-nested for Lua to read back in with `require` or `loadstring`. When this happens, you will get an error message along the lines of `chunk has too many syntax levels` or `C stack overflow`.
 
