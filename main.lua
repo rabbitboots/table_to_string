@@ -354,6 +354,35 @@ end
 
 print("\n * End Med-Sized Table Test * \n")
 
+
+print("\n * Start Priority Keys Test * \n")
+
+do
+	local tbl = {
+		foo = 1,
+		[false] = 2,
+		[true] = 3,
+		bar = 4,
+		[5] = 5,
+	}
+	local fmt = {
+		priority_keys = {"foo", true, false, "bar", 5}
+	}
+	
+	tableToString.setFormatTable(tbl, fmt)
+	print(tableToString.convert(tbl))
+	
+	local tbl = {1, 2, 3, 4, 5, 6, 7, 8}
+	local fmt = {
+		priority_keys = {1, 3, 5, 7, 2, 4, 6, 8}
+	}
+	
+	tableToString.setFormatTable(tbl, fmt)
+	print(tableToString.convert(tbl))
+end
+
+print("\n * End Priority Keys Test * \n")
+
 print("\n * Script complete * \n")
 
 -- If running via LÖVE, quit now. (On Windows, if you don't see any output, try running lovec.exe through a console.)

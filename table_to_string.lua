@@ -271,6 +271,12 @@ local function getSortedKeys(tbl, fmt_t)
 		end
 	end
 
+	-- Demote arrays to hashes if there are any priority keys in the
+	-- format table, even if they do not appear in the sequence.
+	if key_types == "array" and fmt_t.priority_keys and #fmt_t.priority_keys > 0 then
+		key_types = "hash"
+	end
+	
 	-- If this is an array, just return the current order.
 	if key_types == "array" then
 		local ordered = {}
