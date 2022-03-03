@@ -1,3 +1,5 @@
+require("test_lib.strict")
+
 --[[
 	tableToString: An example of reading format tables via the '__index'
 	metamethod, to avoid disturbing table contents.

@@ -1,3 +1,5 @@
+require("test_lib.strict")
+
 --[[
 	tableToString: An example without format tables.
 --]]

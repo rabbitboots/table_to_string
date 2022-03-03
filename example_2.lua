@@ -1,3 +1,5 @@
+require("test_lib.strict")
+
 --[[
 	tableToString: An example of using format tables to prioritize the order of certain keys.
 --]]

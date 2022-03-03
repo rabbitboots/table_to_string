@@ -1,3 +1,5 @@
+require("test_lib.strict")
+
 --[[
 	tableToString tests. (For the actual library, see: table_to_string.lua)
 --]]
@@ -27,6 +29,7 @@
 local tableToString = require("table_to_string")
 
 local errTest = require("test_lib.err_test")
+
 
 -- https://github.com/kikito/inspect.lua
 local inspect = require("test_lib.inspect.inspect")
@@ -385,7 +388,8 @@ print("\n * End Priority Keys Test * \n")
 
 print("\n * Script complete * \n")
 
--- If running via LÖVE, quit now. (On Windows, if you don't see any output, try running lovec.exe through a console.)
+-- If running through LÖVE, exit now.
+local love = rawget(_G, "love") -- Step around strict.lua
 if love and love.event and love.event.quit then
 	love.event.quit()
 end
