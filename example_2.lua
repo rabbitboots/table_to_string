@@ -42,21 +42,18 @@ local fmt_room = {
 	priority_keys = {"name", "location", "boxes"}
 }
 
--- Set the format key to a type that tableToString can't serialize.
-local fmt_key = function () end
-
 -- Assign format tables
 for i, room in ipairs(rooms) do
-	tableToString.setFormatTable(room, fmt_room, fmt_key, false)
+	tableToString.setFormatTable(room, fmt_room, false)
 	for j, box in ipairs(room.boxes) do
-		tableToString.setFormatTable(box, fmt_box, fmt_key, false)
+		tableToString.setFormatTable(box, fmt_box, false)
 	end
 end
 
-local str = tableToString.convert(rooms, fmt_key)
+local str = tableToString.convert(rooms)
 
 -- Recursively remove format tables.
-tableToString.scrubFormatTable(rooms, fmt_key, true)
+tableToString.scrubFormatTable(rooms, true)
 
 print(str)
 
