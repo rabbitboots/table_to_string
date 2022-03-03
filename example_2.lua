@@ -62,7 +62,7 @@ print(str)
 
 -- Output:
 --[[
-Warning: Missing priority key: x
+Warning: Missing priority key: x -- caused by the one box in Blue Room
 Warning: Missing priority key: y
 return {
   {
