@@ -1,26 +1,41 @@
 --[[
 	tableToString tests. (For the actual library, see: table_to_string.lua)
 --]]
+
 --[[
-	Copyright 2022 RBTS
+	Copyright (c) 2022 RBTS
 
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
 
-	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
 
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
 --]]
 
 local tableToString = require("table_to_string")
 
-local errTest = require("test.err_test")
-local inspect = require("test.inspect.inspect")
+local errTest = require("test_lib.err_test")
+
+-- https://github.com/kikito/inspect.lua
+local inspect = require("test_lib.inspect.inspect")
 
 --[[
-Won't Fix:
+	Won't Fix:
 
-* There's a limit in Lua on how deeply-nested tables can be in a table constructor. Because tableToString serializes tables as constructors, it can write out tables that are too deeply-nested to read back in with require() or load().
-
+	Because tableToString serializes tables as constructors, it can write out
+	tables that are too deeply-nested to read back in with require() or load().
 --]]
 
 
@@ -81,14 +96,20 @@ tbl = {
 print(tableToString.convert(tbl))
 
 print("Test: Sequence, default columns")
-tbl = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, }
+tbl = {
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+	22, 23, 24, 25, 26, 27, 28, 29, 30,
+}
 print(tableToString.convert(tbl))
 
 print("Test: Sequence, 8 columns")
-tbl = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, }
+tbl = {
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+	22, 23, 24, 25, 26, 27, 28, 29, 30,
+}
 local fmt = {array_columns = 8}
-tableToString.setFormatTable(tbl, fmt, fmt)
-print(tableToString.convert(tbl, fmt))
+tableToString.setFormatTable(tbl, fmt)
+print(tableToString.convert(tbl))
 
 
 --print("Test: Priority Keys") -- see example_2.lua
@@ -105,16 +126,13 @@ do
 	print("\n[-] Arg #1 bad type")
 	errTest.expectFail(tableToString.convert, nil)
 
-	print("\n[-] Arg #2 cannot be NaN")
-	errTest.expectFail(tableToString.convert, {}, 0/0)
-
 	print("\n[-] Arg #1 Cycle in table structure")
 	local temp = {}
 	temp.temp = {}
 	temp.temp.temp = temp
 	errTest.expectFail(tableToString.convert, temp)
 
-	print("\n[-] Error upon reading unsupported type")
+	print("\n[-] Conversion function encounters unsupported type")
 	local function temp_func() return; end
 	local co = coroutine.create(temp_func)
 
@@ -140,24 +158,20 @@ do
 
 	local _, temp
 
-	errTest.expectPass(tableToString.setFormatTable, t1, f1, "_~FMT~_", false)
+	errTest.expectPass(tableToString.setFormatTable, t1, f1, false)
 
 	print("\n[+] Expected behavior, apply format key recursively to nested tables")
 	local t2 = {{{{{{{{}}}}}}}}
-	_, temp = errTest.expectPass(tableToString.setFormatTable, t2, f1, "_~FMT~_", true)
+	_, temp = errTest.expectPass(tableToString.setFormatTable, t2, f1, true)
 
 	print("\n[-] Arg #1 bad type")
-	errTest.expectFail(tableToString.setFormatTable, false, f1, "_~FMT~_", true)
+	errTest.expectFail(tableToString.setFormatTable, false, f1, true)
 
 	print("\n[-] Arg #2 bad type")
-	errTest.expectFail(tableToString.setFormatTable, t2, false, "_~FMT~_", true)
+	errTest.expectFail(tableToString.setFormatTable, t2, false, true)
 
-	print("\n[-] Arg #3 nil and NaN are not allowed")
-	errTest.expectFail(tableToString.setFormatTable, t2, f1, nil, true)
-	errTest.expectFail(tableToString.setFormatTable, t2, f1, (0/0), true)
-
-	print("\n[-] Arg #4 may be nil, false or true. Try a different bad type")
-	errTest.expectFail(tableToString.setFormatTable, t2, f1, "_~FMT~_", "bad_type")
+	print("\n[-] Arg #3 may be nil, false or true. Try a different bad type")
+	errTest.expectFail(tableToString.setFormatTable, t2, f1, "bad_type")
 
 	print("\n[-] Test missing pri key error")
 	t1 = {a = true, b = false}
@@ -168,26 +182,26 @@ do
 			"bar",
 		},
 	}
-	tableToString.setFormatTable(t1, f1, "_~FMT~_")
-	errTest.expectFail(tableToString.convert, t1, "_~FMT~_")
+	tableToString.setFormatTable(t1, f1)
+	errTest.expectFail(tableToString.convert, t1)
 
-	print("\n[-] Format key 'array_columns' must be nil or a number >= 1")
+	print("\n[-] Format key 'array_columns' must be false/nil or a number >= 1")
 	t1 = {1, 2, 3, 4, 5, 6, 7, 8,}
-	f1 = {array_columns = false}
-	tableToString.setFormatTable(t1, f1, "_~FMT~_")
-	errTest.expectFail(tableToString.convert, t1, "_~FMT~_")
-	
-	print("\n[-] Format key 'missing_pri_key' must be nil or a string.")
+	f1 = {array_columns = "wrong_type"}
+	tableToString.setFormatTable(t1, f1)
+	errTest.expectFail(tableToString.convert, t1)
+
+	print("\n[-] Format key 'missing_pri_key' must be false/nil or a string.")
 	t1 = {1, 2, 3, 4, 5, 6, 7, 8,}
 	f1 = {missing_pri_key = false}
-	tableToString.setFormatTable(t1, f1, "_~FMT~_")
-	errTest.expectFail(tableToString.convert, t1, "_~FMT~_")
+	tableToString.setFormatTable(t1, f1)
+	errTest.expectFail(tableToString.convert, t1)
 
-	print("\n[-] Format key 'priority_keys' must be nil or a table. (Verifying that they are sequences is a bit much IMO.)")
+	print("\n[-] Format key 'priority_keys' must be false/nil or a table.")
 	t1 = {1, 2, 3, 4, 5, 6, 7, 8,}
 	f1 = {priority_keys = false}
-	tableToString.setFormatTable(t1, f1, "_~FMT~_")
-	errTest.expectFail(tableToString.convert, t1, "_~FMT~_")
+	tableToString.setFormatTable(t1, f1)
+	errTest.expectFail(tableToString.convert, t1)
 end
 --]]
 
@@ -207,26 +221,22 @@ do
 		},
 	}
 
-	tableToString.setFormatTable(t1, f1, "_~FMT~_", false)
-	errTest.expectPass(tableToString.scrubFormatTable, t1, "_~FMT~_", false)
+	tableToString.setFormatTable(t1, f1, false)
+	errTest.expectPass(tableToString.scrubFormatTable, t1, false)
 
 	local _, temp
 
 	print("\n[+] Expected behavior, scrub format key recursively from nested tables")
 	local t2 = {{{{{{{{}}}}}}}}
-	tableToString.setFormatTable(t2, f1, "_~FMT~_", true)
+	tableToString.setFormatTable(t2, f1, true)
 	
-	errTest.expectPass(tableToString.scrubFormatTable, t2, "_~FMT~_", true)
+	errTest.expectPass(tableToString.scrubFormatTable, t2, true)
 
 	print("\n[-] Arg #1 bad type")
-	errTest.expectFail(tableToString.scrubFormatTable, false, "_~FMT~_", true)
-	
-	print("\n[-] Arg #2 nil and NaN are not allowed")
-	errTest.expectFail(tableToString.scrubFormatTable, t2, nil, true)
-	errTest.expectFail(tableToString.scrubFormatTable, t2, (0/0), true)
-	
-	print("\n[-] Arg #3 may be nil, false or true. Try a different bad type")
-	errTest.expectFail(tableToString.scrubFormatTable, t2, "_~FMT~_", "bad_type")
+	errTest.expectFail(tableToString.scrubFormatTable, false, true)
+
+	print("\n[-] Arg #2 may be nil, false or true. Try a different bad type")
+	errTest.expectFail(tableToString.scrubFormatTable, t2, "bad_type")
 end
 --]]
 
@@ -241,7 +251,10 @@ do
 	local root = {}
 	local tbl = root
 	-- Generate a mixed-up but deterministic table.
-	local actions = {"i", "nt", "s", "i", "i", "i", "s", "i", "nt", "i", "i", "s", "nt", "s", "bt", "bt", "i", "bt", "bf", "bf"}
+	local actions = {
+		"i", "nt", "s", "i", "i", "i", "s", "i", "nt", "i", "i", "s", "nt",
+		"s", "bt", "bt", "i", "bt", "bf", "bf"
+	}
 
 	if inc_nan then
 		for i = 1, 4 do
@@ -253,7 +266,7 @@ do
 			table.insert(actions, "inf")
 		end
 	end
-	
+
 	local i = 1
 	local tumbler = 1
 	local max = 256

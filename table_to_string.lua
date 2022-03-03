@@ -1,78 +1,93 @@
--- Module: tableToString
--- Description: Serializes a subset of Lua tables, with some ordering and formatting options.
--- Author: RBTS
+local tableToString = {
+	_VERSION = "1.0.0",
+	_URL = "https://github.com/rabbitboots/table_to_string",
+	_DESCRIPTION = "A basic Lua table serializer.",
+	_LICENSE = [[
+	Copyright (c) 2022 RBTS
 
---[[
-	Many bits and pieces are taken from Serpent by Paul Kulchenko:
-	https://github.com/pkulchenko/serpent
---]]
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
 
---[[
-	Copyright 2022 RBTS
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
 
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+	]]
+}
 
-	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
---]]
+-- Many bits and pieces are taken from Serpent by Paul Kulchenko:
+-- https://github.com/pkulchenko/serpent
 
-local tableToString = {}
 
--- Module Config
+-- Config
 
--- Indentation
+-- Indentation.
 tableToString.indent_str = " "
 tableToString.indent_reps = 2
 
+-- The default format table.
+tableToString.fmt_def = {
+	priority_keys = nil,
+	missing_pri_key = nil,
+	array_columns = 20, -- nil for no limit
+}
+
+-- The default format key. It's a data type that tableToString is not capable of serializing.
+tableToString.fmt_key = function() return; end
+
+-- / Config
+
+
+-- Lookup Tables
+
+-- Turns a sequence into a hash table.
+local function makeLUT(seq)
+	local lut = {}
+	for i, val in ipairs(seq) do
+		lut[val] = true
+	end
+	return lut
+end
+
+-- Turns hash keys into a sequence. The order is undefined.
+local function makeSeq(lut)
+	local seq = {}
+	for k in pairs(lut) do
+		table.insert(seq, k)
+	end
+	return seq
+end
+
+-- Policy handlers.
 local policyFunc = {
 	["error"] = function(str) error(str, 3); end,
 	["warn"] = function(str) print("Warning: " .. str); end,
 }
 
--- / Module Config
-
--- Lookup Tables
-
-local _fmt_dummy = {}
-
 -- Accepted types for keys.
-local lut_good_key_types = {
-	["boolean"] = true,
-	["number"] = true,
-	["string"] = true,
-}
+local lut_good_key_types = makeLUT( {"boolean", "number", "string"} )
+
 -- Accepted types for values.
-local lut_good_val_types = {
-	["boolean"] = true,
-	["number"] = true,
-	["string"] = true,
-	["table"] = true,
-}
--- Lua reserved keywords. When used as keys, they need square bracket notation.
-local lut_names_reserved = {
-	["and"]			= true,
-	["break"]		= true,
-	["do"]			= true,
-	["else"]		= true,
-	["elseif"]		= true,
-	["end"]			= true,
-	["false"]		= true,
-	["for"]			= true,
-	["function"]	= true,
-	["if"]			= true,
-	["in"]			= true,
-	["local"]		= true,
-	["nil"]			= true,
-	["not"]			= true,
-	["or"]			= true,
-	["repeat"]		= true,
-	["return"]		= true,
-	["then"]		= true,
-	["true"]		= true,
-	["until"]		= true,
-	["while"]		= true,
-}
+local lut_good_val_types = makeLUT( {"boolean", "number", "string", "table"} )
+
+-- Lua reserved keywords.
+local lut_names_reserved = makeLUT( {
+	"and", "break", "do", "else", "elseif", "end", "false", "for",
+	"function", "if", "in", "local", "nil", "not", "or", "repeat",
+	"return", "then", "true", "until", "while"
+	}
+)
 
 -- Strings to represent special numbers.
 local lut_number_strings = {
@@ -104,25 +119,9 @@ local lut_bool_priority = {
 
 -- Assertions
 
-local function _assertArgType(arg_n, var, allowed_types)
-	-- 'allowed_types' can be a single string or a table sequence of strings.
-	if type(allowed_types) == "table" then
-		for i, type_enum in ipairs(allowed_types) do
-			if type(var) == type_enum then
-				return
-			end
-		end
-		error("bad argument #" .. arg_n .. " (Expected (" .. table.concat(allowed_types, ", ") .. "), got " .. type(var) .. ")", 2)
-
-	elseif type(var) ~= allowed_types then
-		error("bad argument #" .. arg_n .. " (Expected " .. allowed_types .. ", got " .. type(var) .. ")", 2)
-	end
-end
-local _type_non_nil = {"boolean", "cdata", "function", "number", "string", "table", "thread", "userdata"}
-
-local function _assertArgNotNan(arg_n, var)
-	if var ~= var then
-		error("Argument #" .. arg_n .. " cannot be NaN.")
+local function _assertArgType(arg_n, var, allowed_type)
+	if type(var) ~= allowed_type then
+		error("bad argument #" .. arg_n .. " (Expected " .. allowed_type .. ", got " .. type(var) .. ")", 2)
 	end
 end
 
@@ -140,7 +139,6 @@ local function indent(n)
 	return string.rep(tableToString.indent_str, tableToString.indent_reps * n)
 end
 
-
 local function isWritableKey(str)
 	-- Cannot be a reserved Lua keyword
 	if lut_names_reserved[str] then
@@ -153,38 +151,6 @@ local function isWritableKey(str)
 
 	return false
 end
-
-
-local function alphabetize(tbl, sort_func)
-	-- Keys are all assumed to be strings. Sort alphabetically.
-	local seq_az = {}
-	for k in pairs(tbl) do
-		seq_az[#seq_az + 1] = k
-	end
-
-	table.sort(seq_az, sort_func)
-
-	return seq_az
-end
-
-
-local function sort_upper(a, b)
-	return string.upper(a) < string.upper(b)
-end
-
-
-local function sort_numStr(a, b)
-	if type(a) == "number" and type(b) == "string" then
-		return true
-
-	elseif type(a) == "string" and type(b) == "number" then
-		return false
-
-	else
-		return a < b
-	end
-end
-
 
 local function sort_boolNumStr(a, b)
 	local ta, tb = type(a), type(b)
@@ -231,20 +197,6 @@ local function routeKey(k, v, grp_table, grp_other)
 end
 
 
-local function appendArray(arr1, arr2)
-	local i1 = #arr1 + 1
-
-	for i = 1, #arr2 do
-		local key = i
-		local value = arr2[i]
-
-		arr1[i1] = i
-		i1 = i1 + 1
-		arr1[i1 + 1] = value
-	end
-end
-
-
 local function appendArrayGuide(arr, hash, guide)
 	local i1 = #arr + 1
 
@@ -260,9 +212,9 @@ local function appendArrayGuide(arr, hash, guide)
 end
 
 
-local function getSortedKeys(tbl, fmt_t, fmt_key)
+local function getSortedKeys(tbl, fmt_t)
 	local priority_list
-	fmt_t = fmt_t or {}
+	local fmt_key = tableToString.fmt_key
 	priority_list = fmt_t.priority_keys or {}
 
 	local key_types = "array"
@@ -460,7 +412,7 @@ local function write_hash_key(self, key)
 end
 
 
-function tableToString._write_value(self, value, fmt_key)
+function tableToString._write_value(self, value)
 	if type(value) == "string" then
 		-- Escape any sequences that could cause issues
 		value = formatStringSafe(value)
@@ -489,7 +441,7 @@ function tableToString._write_value(self, value, fmt_key)
 		else
 			self:app("{\n")
 			self.indent_level = self.indent_level + 1
-			tableToString._write_table(self, value, fmt_key)
+			tableToString._write_table(self, value)
 
 			self.indent_level = self.indent_level - 1
 			self:indent()
@@ -499,38 +451,33 @@ function tableToString._write_value(self, value, fmt_key)
 end
 
 
-function tableToString._write_table(self, tbl, fmt_key)
+function tableToString._write_table(self, tbl)
 	-- Resolve format table, check type
-	local fmt_t
-	if fmt_key == nil then
-		fmt_t = _fmt_dummy
-	else
-		fmt_t = tbl[fmt_key] or _fmt_dummy
-	end
+	local fmt_key = tableToString.fmt_key
+	local fmt_t = tbl[fmt_key] or tableToString.fmt_def
+
 	if type(fmt_t) ~= "table" then
 		error("'tbl[fmt_key]' must be nil or a table.")
 	end
 
 	-- Retrieve, verify array_columns
-	local array_columns = (fmt_t.array_columns == nil) and 20 or fmt_t.array_columns
-
-	if type(array_columns) ~= "number" or array_columns < 1 then
-		print("fmt_t.array_columns", fmt_t.array_columns, array_columns)
-		error("'array_columns' must be a number >= 1 (or nil for the default setting.)")
+	local array_columns = fmt_t.array_columns or 2^53
+	if array_columns and (type(array_columns) ~= "number" or array_columns < 1) then
+		error("'array_columns' must be a number >= 1 (or false/nil for no column limit.)")
 	end
 
 	-- Check types of missing_pri_keys and priority_keys
-	local type_check
-	type_check = type(fmt_t.missing_pri_key)
-	if type_check ~= "nil" and type_check ~= "string" then
-		error("'missing_pri_key' must be nil or a string.")
+	local v_type
+	v_type = type(fmt_t.missing_pri_key)
+	if v_type ~= "false" and v_type ~= "nil" and v_type ~= "string" then
+		error("'missing_pri_key' must be false/nil or a string.")
 	end
-	type_check = type(fmt_t.priority_keys)
-	if type_check ~= "nil" and type_check ~= "table" then
-		error("'priority_keys' must be nil or a table.")
+	v_type = type(fmt_t.priority_keys)
+	if v_type ~= "false" and v_type ~= "nil" and v_type ~= "table" then
+		error("'priority_keys' must be false/nil or a table.")
 	end
 
-	local list, key_types = getSortedKeys(tbl, fmt_t, fmt_key)
+	local list, key_types = getSortedKeys(tbl, fmt_t)
 
 	if key_types == "array" then
 		local arr_len = #list
@@ -543,7 +490,7 @@ function tableToString._write_table(self, tbl, fmt_key)
 			local val = list[i + 1]
 
 			-- No key to write for arrays
-			tableToString._write_value(self, val, fmt_key)
+			tableToString._write_value(self, val)
 
 			-- Reset column count if the value just written was a table.
 			if type(val) == "table" then
@@ -571,7 +518,7 @@ function tableToString._write_table(self, tbl, fmt_key)
 
 			write_hash_key(self, key)
 			self:app(" = ")
-			tableToString._write_value(self, val, fmt_key)
+			tableToString._write_value(self, val)
 
 			self:app(",\n")
 		end
@@ -595,29 +542,33 @@ local function newAppendObject()
 end
 
 
-function _scrubFormatTable(tbl, fmt_key, recursive, _seen)
+function _scrubFormatTable(tbl, recursive, _seen)
 
 	-- Check for table cycles
 	_assertNoCycles(tbl, _seen)
 	_seen[tbl] = true
+
+	local fmt_key = tableToString.fmt_key
 
 	tbl[fmt_key] = nil
 
 	if recursive then
 		for k, v in pairs(tbl) do
 			if type(v) == "table" then
-				_scrubFormatTable(v, fmt_key, recursive, _seen)
+				_scrubFormatTable(v, recursive, _seen)
 			end
 		end
 	end
 end
 
 
-local function _setFormatTable(tbl, fmt, fmt_key, recursive, _seen)
+local function _setFormatTable(tbl, fmt, recursive, _seen)
 
 	-- Check for table cycles
 	_assertNoCycles(tbl, _seen)
 	_seen[tbl] = true
+
+	local fmt_key = tableToString.fmt_key
 
 	tbl[fmt_key] = fmt
 
@@ -625,7 +576,7 @@ local function _setFormatTable(tbl, fmt, fmt_key, recursive, _seen)
 		for k, v in pairs(tbl) do
 			-- Don't touch the format key
 			if k ~= fmt_key and type(v) == "table" then
-				_setFormatTable(v, fmt, fmt_key, recursive, _seen)
+				_setFormatTable(v, fmt, recursive, _seen)
 			end
 		end
 	end
@@ -638,18 +589,16 @@ end
 
 --- Convert a Lua table with basic data types and no cycles to a string.
 -- @param tbl The table to convert.
--- @param fmt_key (Optional) A key which identifies the format table within this and all sub-tables. Can be anything except NaN. Missing keys in the table or sub-tables are ignored.
 -- @return Serialized string version of 'tbl'.
-function tableToString.convert(tbl, fmt_key)
+function tableToString.convert(tbl)
 
 	_assertArgType(1, tbl, "table")
-	_assertArgNotNan(2, fmt_key)
 
 	local obj = newAppendObject()
 	obj:app("return {\n")
 	obj.indent_level = 1
 
-	tableToString._write_table(obj, tbl, fmt_key)
+	tableToString._write_table(obj, tbl)
 
 	obj:app("}")
 
@@ -657,13 +606,14 @@ function tableToString.convert(tbl, fmt_key)
 end
 
 
---- Assign a 'format key' to a table, and optionally all of its sub-tables. The format key allows you to customize the output on a per-table basis.
+--- Assign a 'format key' to a table, and optionally all of its sub-tables. The
+--    'fmt' key allows you to customize the output on a per-table basis.
 -- @param tbl The source table to configure.
--- @param fmt The format table. (Note: contents are copied to a new table.)
--- @param fmt_key A field value which is used to identify the format table. Needs to be something that does not normally appear in the table structure. Can be anything but nil or NaN.
--- @param recursive (Optional, boolean, default: false) When true, recursively apply this format table to all child tables as well.
+-- @param fmt The format table, assigned as 'tableToString.fmt_key'.
+-- @param recursive (Optional, default: false) When true, recursively apply
+--   this format table to all child tables as well.
 -- @return Nothing.
-function tableToString.setFormatTable(tbl, fmt, fmt_key, recursive)
+function tableToString.setFormatTable(tbl, fmt, recursive)
 
 	-- Defaults
 	recursive = recursive or false
@@ -671,31 +621,27 @@ function tableToString.setFormatTable(tbl, fmt, fmt_key, recursive)
 	-- Check input
 	_assertArgType(1, tbl, "table")
 	_assertArgType(2, fmt, "table")
-	_assertArgType(3, fmt_key, _type_non_nil)
-	_assertArgNotNan(3, fmt_key)
-	_assertArgType(4, recursive, "boolean")
+	_assertArgType(3, recursive, "boolean")
 
-	_setFormatTable(tbl, fmt, fmt_key, recursive, {})
+	_setFormatTable(tbl, fmt, recursive, {})
 end
 
 
 --- Remove the 'format key' from a table, and optionally its subtables.
 -- @param tbl The table to clean up.
--- @fmt_key The field name used to identify the format table, as set with tableToString.setFormatTable(). Can be anything but nil or NaN.
--- @param recursive (Optional, boolean, default: false) When true, recursively clean the format key from all sub-tables.
+-- @param recursive (Optional, boolean, default: false) When true, recursively
+--   clean the format key from all sub-tables.
 -- @return Nothing.
-function tableToString.scrubFormatTable(tbl, fmt_key, recursive)
+function tableToString.scrubFormatTable(tbl, recursive)
 
 	-- Defaults
 	recursive = recursive or false
 
 	-- Check input
 	_assertArgType(1, tbl, "table")
-	_assertArgType(2, fmt_key, _type_non_nil)
-	_assertArgNotNan(2, fmt_key)
-	_assertArgType(3, recursive, "boolean")
+	_assertArgType(2, recursive, "boolean")
 
-	_scrubFormatTable(tbl, fmt_key, recursive, {})
+	_scrubFormatTable(tbl, recursive, {})
 end
 
 -- / Public Interface

@@ -34,7 +34,7 @@ Some exceptions apply:
 
 ### Per-Table
 
-Format tables may be attached to tables and sub-tables to control some aspects of the serialization process.
+Format tables may be attached to tables and sub-tables to control some aspects of the serialization process. The key used is stored in `tableToString.fmt_key`, and it defaults to a type that tableToString cannot serialize. While serializing, if the format key isn't found, a default table is used (stored in `tableToString.fmt_def`.)
 
 * `fmt.priority_keys`: Sequence of strings representing fields which should be written first, in this order. *Default: `nil`*
 
@@ -43,31 +43,35 @@ Format tables may be attached to tables and sub-tables to control some aspects o
   * `"warn"`: Print a warning to the console.
   * `nil`: Ignore. *(Default)*
 
-* `fmt.array_columns`: How many values in a numeric sequence to write per line. *Default: 20*
+* `fmt.array_columns`: How many values in a numeric sequence to write per line. Can be false/nil for no limit, or >= 1. *Default: 20*
+
+NOTE: Format tables do not automatically fall back to the default `tableToString.fmt_def`. If desired, this can be accomplished with the `__index` metamethod.
 
 
 ## Public Functions
 
-`tableToString.convert(tbl, [fmt_key])`
+`tableToString.convert(tbl)`
 
-Returns a serialized string version of `tbl`. If format tables were applied, then pass in the identifier as the second argument.
+Returns a serialized string version of `tbl`.
 
 
-`tableToString.setFormatTable(tbl, fmt, fmt_key, [recursive])`
+`tableToString.setFormatTable(tbl, fmt, [recursive])`
 
-Assigns the table `fmt` to `tbl` using the key `fmt_key` (ie `tbl[fmt_key] = fmt`.) `fmt_key` should be something that normally doesn't appear within the table, and it can be a type that is unsupported by the serializer, such as a throwaway / dummy function.
+Assigns the table `fmt` to `tbl` using the key `tableToString.fmt_key` (ie `tbl[tableToString.fmt_key] = fmt`.)
 
 If `recursive` is true, then the same operation is applied to all sub-tables. (NOTE: in this case, the same table reference is assigned to every sub-table. Changing the format table will affect all tables that it is attached to.)
 
 
-`tableToString.scrubFormatTable(tbl, fmt_key, [recursive])`
+`tableToString.scrubFormatTable(tbl, [recursive])`
 
-Removes the format table from `tbl` stored in `tbl[fmt_key]`. If `recursive` is true, then the same operation is applied to all sub-tables.
+Removes the format table from `tbl` stored in `tbl[tableToString.fmt_key]`. If `recursive` is true, then the same operation is applied to all sub-tables.
 
 
 ## Issues and Limitations
 
 tableToString can serialize tables that are too deeply-nested for Lua to read back in with `require` or `loadstring`. When this happens, you will get an error message along the lines of `chunk has too many syntax levels` or `C stack overflow`.
+
+Mutating the tables to assign formatting keys is maybe not the best design. To prevent changing the tables themselves, you can use metatables and the `__index` metamethod to make the key readable without disturbing the table contents. You can also change `tableToString.fmt_key` to anything other than NaN, if the function data type is a problem.
 
 
 ## Supported Versions
