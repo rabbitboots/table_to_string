@@ -1,3 +1,5 @@
+**Version:** 1.0.1
+
 # tableToString
 
 A basic Lua table serializer.
@@ -5,7 +7,7 @@ A basic Lua table serializer.
 Many bits and pieces are taken from [Serpent](https://github.com/pkulchenko/serpent).
 
 
-## Description
+# Description
 
 This module orders table contents into four groups:
 
@@ -23,16 +25,16 @@ Some exceptions apply:
 * Attached metatables are not saved, and serialization may be affected by metamethods.
 
 
-## Configuration
+# Configuration
 
-### Module-wide
+## Module-wide
 
 * `tableToString.indent_str`: The symbol to use when indenting. *Default: space (" ")*
 
 * `tableToString.indent_reps`: How many repetitions of the indent symbol to write at a time. *Default: 2*
 
 
-### Per-Table
+## Per-Table
 
 Format tables may be attached to tables and sub-tables to control some aspects of the serialization process. The key used is stored in `tableToString.fmt_key`, and it defaults to a type that tableToString cannot serialize. While serializing, if the format key isn't found, a default table is used (stored in `tableToString.fmt_def`.)
 
@@ -48,40 +50,64 @@ Format tables may be attached to tables and sub-tables to control some aspects o
 NOTE: Format tables do not automatically fall back to the default `tableToString.fmt_def`. If desired, this can be accomplished with the `__index` metamethod.
 
 
-## Public Functions
+# Public Functions
 
-`tableToString.convert(tbl)`
 
-Returns a serialized string version of `tbl`.
+## tableToString.convert
 
+Converts an input table to serialized string form.
+
+`local str = tableToString.convert(tbl)`
+
+* `tbl`: The table to serialize.
+
+**Returns:** The serialized string, which can be loaded as a Lua chunk.
+
+
+## tableToString.setFormatTable
+
+Assigns a format table to another table using the key `tableToString.fmt_key`.
 
 `tableToString.setFormatTable(tbl, fmt, [recursive])`
 
-Assigns the table `fmt` to `tbl` using the key `tableToString.fmt_key` (ie `tbl[tableToString.fmt_key] = fmt`.)
+* `tbl`: The target table to modify.
+* `fmt`: The format table to attach to `tbl`.
+* `recursive`: *(false)* Apply the same format table to all sub-tables.
 
-If `recursive` is true, then the same operation is applied to all sub-tables. (NOTE: in this case, the same table reference is assigned to every sub-table. Changing the format table will affect all tables that it is attached to.)
 
+### Notes
+
+* This function is essentially `tbl[tableToString.fmt_key] = fmt`.
+
+* When using `recursive`, the same `fmt` table reference is assigned to every sub-table. Changing the format table will affect *all* tables that it is attached to.
+
+
+## tableToString.scrubFormatTable
+
+Removes the format table attached to a given table.
 
 `tableToString.scrubFormatTable(tbl, [recursive])`
 
-Removes the format table from `tbl` stored in `tbl[tableToString.fmt_key]`. If `recursive` is true, then the same operation is applied to all sub-tables.
+* `tbl`: The table to scrub.
+
+* `recursive`: *(false)* Remove format tables from all sub-tables as well.
 
 
-## Issues and Limitations
+# Issues and Limitations
 
 tableToString can serialize tables that are too deeply-nested for Lua to read back in with `require` or `loadstring`. When this happens, you will get an error message along the lines of `chunk has too many syntax levels` or `C stack overflow`.
 
 Mutating the tables to assign formatting keys is maybe not the best design. To prevent changing the tables themselves, you can use metatables and the `__index` metamethod to make the key readable without disturbing the table contents. You can also change `tableToString.fmt_key` to anything other than NaN, if the function data type is a problem.
 
 
-## Supported Versions
+# Supported Versions
 
 Tested with LuaJIT 2.1.0-beta3, Lua 5.1.5, Lua 5.4.4, and within LÖVE 11.4 (ebe628e) with LuaJIT.
 
 
-## License (MIT)
+# License (MIT)
 
-Copyright 2022 RBTS
+Copyright 2022, 2023 RBTS
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

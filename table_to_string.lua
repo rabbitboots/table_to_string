@@ -1,33 +1,36 @@
-local tableToString = {
-	_VERSION = "1.0.0",
-	_URL = "https://github.com/rabbitboots/table_to_string",
-	_DESCRIPTION = "A basic Lua table serializer.",
-	_LICENSE = [[
-	Copyright (c) 2022 RBTS
-
-	Permission is hereby granted, free of charge, to any person obtaining a copy
-	of this software and associated documentation files (the "Software"), to deal
-	in the Software without restriction, including without limitation the rights
-	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	copies of the Software, and to permit persons to whom the Software is
-	furnished to do so, subject to the following conditions:
-
-	The above copyright notice and this permission notice shall be included in all
-	copies or substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-	SOFTWARE.
-	]]
-}
-
+-- tableToString: A basic Lua table serializer.
+-- See README.md and LICENSE for more info.
+-- Version: 1.0.1
 
 -- Many bits and pieces are taken from Serpent by Paul Kulchenko:
 -- https://github.com/pkulchenko/serpent
+
+--[[
+MIT License
+
+Copyright (c) 2022, 2023 RBTS
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+]]
+
+
+local tableToString = {}
 
 
 -- Config
@@ -53,6 +56,7 @@ tableToString.fmt_key = function() return; end
 
 -- Turns a sequence into a hash table.
 local function makeLUT(seq)
+
 	local lut = {}
 	for i, val in ipairs(seq) do
 		lut[val] = true
@@ -62,6 +66,7 @@ end
 
 -- Turns hash keys into a sequence. The order is undefined.
 local function makeSeq(lut)
+
 	local seq = {}
 	for k in pairs(lut) do
 		table.insert(seq, k)
@@ -120,12 +125,14 @@ local lut_bool_priority = {
 -- Assertions
 
 local function _assertArgType(arg_n, var, allowed_type)
+
 	if type(var) ~= allowed_type then
 		error("bad argument #" .. arg_n .. " (Expected " .. allowed_type .. ", got " .. type(var) .. ")", 2)
 	end
 end
 
 local function _assertNoCycles(tbl, _seen)
+
 	if _seen[tbl] then
 		error("Multiple appearances of table: " .. tostring(tbl))
 	end
@@ -140,6 +147,7 @@ local function indent(n)
 end
 
 local function isWritableKey(str)
+
 	-- Cannot be a reserved Lua keyword
 	if lut_names_reserved[str] then
 		return false
@@ -153,6 +161,7 @@ local function isWritableKey(str)
 end
 
 local function sort_boolNumStr(a, b)
+
 	local ta, tb = type(a), type(b)
 
 	-- Different types: go by lookup table
@@ -173,6 +182,22 @@ local function sort_boolNumStr(a, b)
 	end
 end
 
+-- https://github.com/pkulchenko/serpent/issues/36
+-- 'string.format()' will use a dot or a comma for decimals, depending on the locale.
+-- The Lua lexer expects dots only.
+local dotRadix
+local radix_ptn = "%" .. ("%.1f"):format(0.5):match("0([^5]+)5")
+if radix_ptn == "%." then
+	dotRadix = function(str)
+		return str
+	end
+
+else
+	dotRadix = function(str)
+		return str:gsub(radix_ptn, ".")
+	end
+end
+
 -- / Helpers
 
 -- Internal Functions
@@ -188,6 +213,7 @@ end
 
 
 local function routeKey(k, v, grp_table, grp_other)
+
 	if type(v) == "table" then
 		grp_table[k] = v
 
@@ -198,6 +224,7 @@ end
 
 
 local function appendArrayGuide(arr, hash, guide)
+
 	local i1 = #arr + 1
 
 	for i = 1, #guide do
@@ -213,6 +240,7 @@ end
 
 
 local function getSortedKeys(tbl, fmt_t)
+
 	local priority_list
 	local fmt_key = tableToString.fmt_key
 	priority_list = fmt_t.priority_keys or {}
@@ -368,8 +396,9 @@ end
 
 
 local function formatNumber(number)
+
 	-- Attempt to keep precision of floating point values.
-	local num_s = string.format("%.17g", number)
+	local num_s = dotRadix(string.format("%.17g", number))
 
 	-- Check some special cases.
 	if lut_number_strings[num_s] then
@@ -381,6 +410,7 @@ end
 
 
 local function formatStringSafe(str)
+
 	-- Format string for later safe reading
 	str = string.format("%q", str)
 	-- Escape newlines
@@ -393,6 +423,7 @@ end
 
 
 local function write_hash_key(self, key)
+
 	if type(key) == "string" then
 		-- Key conforms to 'foo.bar123' syntax:
 		if isWritableKey(key) then
@@ -419,6 +450,7 @@ end
 
 
 function tableToString._write_value(self, value)
+
 	if type(value) == "string" then
 		-- Escape any sequences that could cause issues
 		value = formatStringSafe(value)
@@ -458,6 +490,7 @@ end
 
 
 function tableToString._write_table(self, tbl)
+
 	-- Resolve format table, check type
 	local fmt_key = tableToString.fmt_key
 	local fmt_t = tbl[fmt_key] or tableToString.fmt_def
@@ -533,6 +566,7 @@ end
 
 
 local function newAppendObject()
+
 	local self = {}
 
 	self.arr = {} -- array-of-strings workspace
