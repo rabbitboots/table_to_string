@@ -1,8 +1,14 @@
+-- tableToString: An example without format tables.
+
+
 require("test_lib.strict")
 
---[[
-	tableToString: An example without format tables.
---]]
+
+local inspect = require("test_lib.inspect.inspect")
+
+
+local _load = (_VERSION == "Lua 5.1") and loadstring or load
+
 
 local tableToString = require("table_to_string")
 
@@ -43,23 +49,7 @@ return {
 --]]
 
 print("\nExamine the reloaded table.\n")
-local str_fn = load(str)
+local str_fn = _load(str)
 local fn_str = str_fn()
 
-local function temp_print(tbl, depth) -- It's no Inspect, but you get the idea.
-	if depth > 0 then
-		io.write(string.rep("  ", depth))
-	end
-
-	for k, v in pairs(tbl) do
-		if type(v) == "table" then
-			print(tostring(k) .. " == Table:")
-			temp_print(v, depth + 1)
-
-		else
-			print(tostring(k) .. " == " .. tostring(v))
-		end
-	end
-end
-temp_print(fn_str, 0)
-
+print(inspect(fn_str))

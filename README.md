@@ -76,7 +76,7 @@ Mutating the tables to assign formatting keys is maybe not the best design. To p
 
 ## Supported Versions
 
-Tested with LuaJIT 2.1.0-beta3, Lua 5.4.4, and within LÖVE 11.4 (ebe628e) with LuaJIT.
+Tested with LuaJIT 2.1.0-beta3, Lua 5.1.5, Lua 5.4.4, and within LÖVE 11.4 (ebe628e) with LuaJIT.
 
 
 ## License (MIT)

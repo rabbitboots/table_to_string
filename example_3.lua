@@ -1,11 +1,14 @@
-require("test_lib.strict")
-
 --[[
 	tableToString: An example of reading format tables via the '__index'
 	metamethod, to avoid disturbing table contents.
 --]]
 
+
+require("test_lib.strict")
+
+
 local tableToString = require("table_to_string")
+
 
 -- The table to serialize.
 local people = {
