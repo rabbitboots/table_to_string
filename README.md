@@ -1,4 +1,4 @@
-**Version:** 1.0.1
+**Version:** 1.0.2
 
 # tableToString
 
@@ -62,6 +62,11 @@ Converts an input table to serialized string form.
 * `tbl`: The table to serialize.
 
 **Returns:** The serialized string, which can be loaded as a Lua chunk.
+
+
+### Notes
+
+* Do not change the application locale (`os.setlocale(str)`) while running this function (say, from another thread).
 
 
 ## tableToString.setFormatTable

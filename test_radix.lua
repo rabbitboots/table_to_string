@@ -4,10 +4,10 @@
 require("test_lib.strict")
 
 
-assert(os.setlocale('fr_FR'))
-
-
 local tableToString = require("table_to_string")
+
+
+assert(os.setlocale('fr_FR'))
 
 
 local tbl = {0.5}

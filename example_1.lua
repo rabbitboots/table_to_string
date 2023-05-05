@@ -53,3 +53,4 @@ local str_fn = _load(str)
 local fn_str = str_fn()
 
 print(inspect(fn_str))
+

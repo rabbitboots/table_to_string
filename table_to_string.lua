@@ -1,6 +1,6 @@
 -- tableToString: A basic Lua table serializer.
 -- See README.md and LICENSE for more info.
--- Version: 1.0.1
+-- Version: 1.0.2
 
 -- Many bits and pieces are taken from Serpent by Paul Kulchenko:
 -- https://github.com/pkulchenko/serpent
@@ -182,23 +182,23 @@ local function sort_boolNumStr(a, b)
 	end
 end
 
+
 -- https://github.com/pkulchenko/serpent/issues/36
 -- 'string.format()' will use a dot or a comma for decimals, depending on the locale.
 -- The Lua lexer expects dots only.
-local dotRadix
-local radix_ptn = "%" .. ("%.1f"):format(0.5):match("0([^5]+)5")
-if radix_ptn == "%." then
-	dotRadix = function(str)
-		return str
-	end
+local _dotRadix, _radix_ptn
+local function _dotRadixA(str) return str end
+local function _dotRadixB(str) return str:gsub(_radix_ptn, ".") end
+local function _updateRadixMark()
 
-else
-	dotRadix = function(str)
-		return str:gsub(radix_ptn, ".")
-	end
+	_radix_ptn = "%" .. ("%.1f"):format(0.5):match("0([^5]+)5")
+	_dotRadix = (_radix_ptn == "%.") and _dotRadixA or _dotRadixB
 end
+_updateRadixMark()
+
 
 -- / Helpers
+
 
 -- Internal Functions
 
@@ -398,7 +398,7 @@ end
 local function formatNumber(number)
 
 	-- Attempt to keep precision of floating point values.
-	local num_s = dotRadix(string.format("%.17g", number))
+	local num_s = _dotRadix(string.format("%.17g", number))
 
 	-- Check some special cases.
 	if lut_number_strings[num_s] then
@@ -625,7 +625,9 @@ end
 
 -- / Internal Functions
 
+
 -- Public Interface
+
 
 --- Convert a Lua table with basic data types and no cycles to a string.
 -- @param tbl The table to convert.
@@ -633,6 +635,8 @@ end
 function tableToString.convert(tbl)
 
 	_assertArgType(1, tbl, "table")
+
+	_updateRadixMark()
 
 	local obj = newAppendObject()
 	obj:app("return {\n")
@@ -684,7 +688,9 @@ function tableToString.scrubFormatTable(tbl, recursive)
 	_scrubFormatTable(tbl, recursive, {})
 end
 
+
 -- / Public Interface
+
 
 return tableToString
 

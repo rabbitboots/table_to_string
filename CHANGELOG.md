@@ -2,6 +2,12 @@
 
 (Date format: `YYYY-MM-DD`)
 
+# 1.0.2 (2023-05-05)
+
+* `table_to_string.lua`: Make the radix mark locale fix more robust (it would break if the user changed locales *after* loading the module). This might still break if the locale changes while `tableToString.convert()` is running, though I wasn't able to make it happen with a threaded test project in LÖVE / Linux.
+* Minor whitespace adjustments in examples.
+
+
 # 1.0.1 (2023-05-04)
 
 * `table_to_string.lua`:
