@@ -1,3 +1,7 @@
+# Obsolete
+
+**This repository is obsolete.** tableToString has been supplanted by [T2S2](https://github.com/rabbitboots/t2s2).
+
 **Version:** 1.0.2
 
 # tableToString
